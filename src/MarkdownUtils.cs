@@ -77,10 +77,10 @@ namespace MarkdownFigma
             List<string> images = new List<string>();
 
             string basePath = Path.GetDirectoryName(file);
-            pathFilter = Path.GetFullPath(pathFilter, basePath);
+            pathFilter = Path.GetFullPath(Path.Combine(basePath, pathFilter));
             foreach (LinkInline i in document.Descendants<LinkInline>().Where(li => li.IsImage))
             {
-                string imagePath = Path.GetDirectoryName(Path.GetFullPath(i.Url, basePath));
+                string imagePath = Path.GetDirectoryName(Path.GetFullPath(Path.Combine(basePath, i.Url)));
                 if (imagePath.Equals(pathFilter))
                     images.Add(Path.GetFileName(i.Url));
                 else
