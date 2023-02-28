@@ -35,9 +35,9 @@ jobs:
           dotnet publish --no-restore -c Release -o ./publish/windows -r win10-x64 --self-contained /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=false /p:PublishTrimmed=false src/
           dotnet publish --no-restore -c Release -o ./publish/osx -r osx.10.11-x64 --self-contained /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=false /p:PublishTrimmed=false src/
           dotnet publish --no-restore -c Release -o ./publish/linux -r linux-x64 --self-contained /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=false /p:PublishTrimmed=false src/
-          mv publish/windows/MarkdownFigma.CLI.exe publish/markdown-figma-windows.exe
-          mv publish/osx/MarkdownFigma.CLI publish/markdown-figma-osx
-          mv publish/linux/MarkdownFigma.CLI publish/markdown-figma-linux
+          mv publish/windows/MarkdownFigma.exe publish/markdown-figma-windows.exe
+          mv publish/osx/MarkdownFigma publish/markdown-figma-osx
+          mv publish/linux/MarkdownFigma publish/markdown-figma-linux
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
