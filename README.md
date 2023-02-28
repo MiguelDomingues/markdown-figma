@@ -38,6 +38,7 @@ Argument | Expected Value | Required
 --ignore-duplicates | Ignore duplicated elements in a Figma page | No
 --svg-visual-check-only | Compare SVG files visually instead | No
 --max-updates | Maximum number of updates before exiting. Use 0 to denote all | No
+--report | File to write the markdown report summary to | No
 
 Sample usage:
 

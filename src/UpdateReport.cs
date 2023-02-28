@@ -12,6 +12,7 @@ namespace MarkdownFigma
     internal class UpdateReport
     {
         internal string Name;
+        internal string URL;
         internal double Similarity;
         internal UpdateAction Action;
     }

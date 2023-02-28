@@ -173,6 +173,7 @@ namespace MarkdownFigma
                                 Name = name + extension,
                                 Similarity = similarity,
                                 Action = UpdateAction.UPDATE_SIMILARITY,
+                                URL = GetFigmaURL(fileKey, dl.Key),
                             });
                         }
                         else if (!svgVisualCheckOnly && !originalFile.ToArray().SequenceEqual(newImage))
@@ -184,6 +185,7 @@ namespace MarkdownFigma
                                 Name = name + extension,
                                 Similarity = similarity,
                                 Action = UpdateAction.UPDATE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
                             });
                         }
                         else
@@ -193,6 +195,7 @@ namespace MarkdownFigma
                                 Name = name + extension,
                                 Similarity = similarity,
                                 Action = UpdateAction.NONE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
                             });
                         }
                     }
@@ -209,6 +212,7 @@ namespace MarkdownFigma
                                 Name = name + extension,
                                 Similarity = similarity,
                                 Action = UpdateAction.UPDATE_SIMILARITY,
+                                URL = GetFigmaURL(fileKey, dl.Key),
                             });
                         }
                         else
@@ -218,6 +222,7 @@ namespace MarkdownFigma
                                 Name = name + extension,
                                 Similarity = similarity,
                                 Action = UpdateAction.NONE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
                             });
                         }
                     }

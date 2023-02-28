@@ -7,6 +7,7 @@ using System.Collections;
 using Serilog.Events;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace MarkdownFigma
 {
@@ -43,8 +44,12 @@ namespace MarkdownFigma
         [Option(Template = "--similarity", Description = "When visual comparison is used, only images below this threshold are updated. Value between 0-100")]
         public double SimilarityThreshold { get; private set; } = 95.0;
 
-        [Option("--max-updates", "When visual comparison is used, only images below this threshold are updated. Value between 0-100", CommandOptionType.SingleValue)]
+        [Option("--max-updates", "Stop scanning files after N number of updates.", CommandOptionType.SingleValue)]
         public int MaxUpdates { get; private set; } = 0;
+
+        [Option("--report", "File to output the markdown report", CommandOptionType.SingleValue)]
+        public string ReportFile { get; private set; } = null;
+        public StringBuilder Report { get; private set; } = null;
 
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
@@ -55,10 +60,23 @@ namespace MarkdownFigma
             Log.Information("Scan directory: {Directory}", InputDirectory);
             Log.Information("File pattern is: {FilePattern}", FilePattern);
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
+            if (ReportFile != null)
+                Report = new StringBuilder();
 
             try
             {
                 ScanDirectory(InputDirectory);
+                if (Report != null)
+                {
+                    Report.AppendLine("**Summary:**");
+                    Report.AppendLine();
+                    Report.AppendLine("Downloaded files: " + FigmaAPI.DOWNLOADS_COUNT);
+                    Report.AppendLine();
+                    Report.AppendLine("Downloaded size: " + BytesToString(FigmaAPI.DOWNLOADS_SIZE));
+
+                    File.WriteAllText(ReportFile, Report.ToString());
+                }
+
             }
             catch (Exception e)
             {
@@ -160,6 +178,39 @@ namespace MarkdownFigma
             }
 
             Updates.Add(filePath, updatedAssets);
+
+            if (updatedAssets.Count() > 0 && Report != null)
+            {
+                if (updatedAssets.Any(ua => ua.Action == UpdateAction.UPDATE_SIMILARITY || ua.Action == UpdateAction.UPDATE || ua.Action == UpdateAction.UPDATE))
+                {
+                    Report.AppendLine(":memo: " + filePath + " ([Figma](" + figmaURL + "))");
+                    Report.AppendLine();
+                    Report.AppendLine("Visual Asset | Status");
+                    Report.AppendLine("------------ | ------");
+
+                    foreach (UpdateReport ur in updatedAssets)
+                    {
+                        switch (ur.Action)
+                        {
+                            case UpdateAction.UPDATE_SIMILARITY:
+                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Similarity @ " + ur.Similarity.ToString("0.##") + " %");
+                                break;
+                            case UpdateAction.UPDATE:
+                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Update");
+                                break;
+                            case UpdateAction.DELETE:
+                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Delete");
+                                break;
+                            case UpdateAction.FIGMA_MISSING:
+                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Not found in Figma");
+                                break;
+                            case UpdateAction.NONE:
+                                break;
+                        }
+                    }
+                    Report.AppendLine();
+                }
+            }
         }
 
         private bool AboveMaxUpdates()
