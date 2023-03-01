@@ -151,7 +151,11 @@ namespace MarkdownFigma
                     string fname = Path.GetFileName(f);
                     if (!deletedAssets.Any(ua => ua.Name == fname))
                     {
-                        if (images.Any(i => i == fname))
+                        if (updatedAssets.Any(ua => ua.Name == fname))
+                        {
+                            continue;
+                        }
+                        else if (images.Any(i => i == fname))
                         {
                             deletedAssets.Add(new UpdateReport()
                             {
