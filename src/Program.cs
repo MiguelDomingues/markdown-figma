@@ -53,7 +53,7 @@ namespace MarkdownFigma
 
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
-        private void OnExecute()
+        private int OnExecute()
         {
             SetupLogger();
 
@@ -76,12 +76,13 @@ namespace MarkdownFigma
 
                     File.WriteAllText(ReportFile, Report.ToString());
                 }
-
+                return 0;
             }
             catch (Exception e)
             {
                 Log.Error(e.Message);
                 Log.Debug(e.StackTrace);
+                return -1;
             }
         }
 
