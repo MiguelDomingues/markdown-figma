@@ -186,7 +186,7 @@ namespace MarkdownFigma
 
             if (updatedAssets.Count() > 0 && Report != null)
             {
-                if (updatedAssets.Any(ua => ua.Action == UpdateAction.UPDATE_SIMILARITY || ua.Action == UpdateAction.UPDATE || ua.Action == UpdateAction.UPDATE))
+                if (updatedAssets.Any(ua => ua.Action != UpdateAction.NONE))
                 {
                     Report.AppendLine(":memo: " + filePath + " ([Figma](" + figmaURL + "))");
                     Report.AppendLine();
