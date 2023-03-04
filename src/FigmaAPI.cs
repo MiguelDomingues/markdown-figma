@@ -78,19 +78,11 @@ namespace MarkdownFigma
             return node;
         }
 
-        private static Dictionary<string, string> GetExportUrls(string token, string key, IEnumerable<string> ids, FigmaFormat format)
+        private static Dictionary<string, string> GetExportUrls(string token, string key, string ids, FigmaFormat format)
         {
-            ConcurrentDictionary<string, string> result = new ConcurrentDictionary<string, string>();
-            ids.AsParallel().ForAll(id =>
-            {
-                FigmaImagesExport f = Get<FigmaImagesExport>(token, $"images/{key}?ids={id}&format={format.ToString().ToLower()}", null);
-                foreach (KeyValuePair<string, string> i in f.Images)
-                {
-                    result.AddOrUpdate(i.Key, i.Value, (key, oldValue) => i.Value);
-                }
-            });
+            FigmaImagesExport f = Get<FigmaImagesExport>(token, $"images/{key}?ids={ids}&format={format.ToString().ToLower()}", null);
 
-            return result.ToDictionary(entry => entry.Key, entry => entry.Value);
+            return f.Images;
         }
 
         internal static IEnumerable<UpdateReport> ExportNodesTo(string figmaToken, string figmaURL, string exportPath, bool ignoreDuplicates, bool svgVisualCheckOnly, IEnumerable<string> includeOnly, double threshold)
@@ -128,7 +120,8 @@ namespace MarkdownFigma
                 if (formatChilds.Count() == 0)
                     continue;
                 Log.Information("Obtaining download urls for {Count} {Format} elements...", formatChilds.Count(), format);
-                Dictionary<string, string> downloadUrls = GetExportUrls(figmaToken, fileKey, formatChilds.Select(c => c.Id), format);
+                string ids = string.Join(",", formatChilds.Select(c => c.Id));
+                Dictionary<string, string> downloadUrls = GetExportUrls(figmaToken, fileKey, ids, format);
                 downloadUrls.AsParallel().ForAll(dl =>
                 {
                     string name = formatChilds.Where(c => c.Id == dl.Key).First().Name.Trim();
