@@ -117,6 +117,17 @@ namespace MarkdownFigma
                 ConcurrentDictionary<string, object> filenames = new ConcurrentDictionary<string, object>();
                 IEnumerable<FigmaChild> formatChilds = childs.Where(c => c.ExportSettings != null && c.ExportSettings.Any(e => e.Format == format));
                 formatChilds = formatChilds.Where(c => includeOnly == null || includeOnly.Any(f => f == c.Name + extension));
+                IEnumerable<FigmaChild> unused = childs.Where(c => c.ExportSettings != null && c.ExportSettings.Any(e => e.Format == format)).Where(c => !formatChilds.Any(f => f.Id == c.Id));
+                foreach (FigmaChild u in unused)
+                {
+                    Log.Warning("{Name} has an export defined but is not used. {URL}", u.Name + extension, GetFigmaURL(fileKey, u.Id));
+                    updatedAssets.Add(new UpdateReport()
+                    {
+                        Name = u.Name + extension,
+                        Action = UpdateAction.UNUSED,
+                        URL = GetFigmaURL(fileKey, u.Id),
+                    });
+                }
                 if (formatChilds.Count() == 0)
                     continue;
                 Log.Information("Obtaining download urls for {Count} {Format} elements...", formatChilds.Count(), format);

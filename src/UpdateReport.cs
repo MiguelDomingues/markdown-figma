@@ -7,6 +7,7 @@ namespace MarkdownFigma
         UPDATE,
         DELETE,
         FIGMA_MISSING,
+        UNUSED,
     }
 
     internal class UpdateReport

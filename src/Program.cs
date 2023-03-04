@@ -207,7 +207,10 @@ namespace MarkdownFigma
                                 Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Delete");
                                 break;
                             case UpdateAction.FIGMA_MISSING:
-                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Not found in Figma");
+                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Missing in Figma");
+                                break;
+                            case UpdateAction.UNUSED:
+                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Not used");
                                 break;
                             case UpdateAction.NONE:
                                 break;
