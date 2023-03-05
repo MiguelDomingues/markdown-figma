@@ -22,6 +22,7 @@ namespace MarkdownFigma
         public static int DOWNLOADS_COUNT = 0;
         public static int DOWNLOADS_SIZE = 0;
 
+        public static int NUMBER_OF_THREADS { get; private set; } = Math.Max(Environment.ProcessorCount, 4);
 
         private static HttpClient GetHTTPClient(string token)
         {
@@ -78,11 +79,20 @@ namespace MarkdownFigma
             return node;
         }
 
-        private static Dictionary<string, string> GetExportUrls(string token, string key, string ids, FigmaFormat format)
+        private static Dictionary<string, string> GetExportUrls(string token, string key, IEnumerable<string> ids, FigmaFormat format)
         {
-            FigmaImagesExport f = Get<FigmaImagesExport>(token, $"images/{key}?ids={ids}&format={format.ToString().ToLower()}", null);
+            Log.Information("Obtaining download urls for {Count} {Format} elements...", ids.Count(), format);
+            ConcurrentDictionary<string, string> result = new ConcurrentDictionary<string, string>();
+            ids.AsParallel().WithDegreeOfParallelism(NUMBER_OF_THREADS).ForAll(id =>
+            {
+                FigmaImagesExport f = Get<FigmaImagesExport>(token, $"images/{key}?ids={id}&format={format.ToString().ToLower()}", null);
+                foreach (KeyValuePair<string, string> i in f.Images)
+                {
+                    result.AddOrUpdate(i.Key, i.Value, (key, oldValue) => i.Value);
+                }
+            });
 
-            return f.Images;
+            return result.ToDictionary(entry => entry.Key, entry => entry.Value);
         }
 
         internal static IEnumerable<UpdateReport> ExportNodesTo(string figmaToken, string figmaURL, string exportPath, bool ignoreDuplicates, bool svgVisualCheckOnly, IEnumerable<string> includeOnly, double threshold)
@@ -130,9 +140,7 @@ namespace MarkdownFigma
                 }
                 if (formatChilds.Count() == 0)
                     continue;
-                Log.Information("Obtaining download urls for {Count} {Format} elements...", formatChilds.Count(), format);
-                string ids = string.Join(",", formatChilds.Select(c => c.Id));
-                Dictionary<string, string> downloadUrls = GetExportUrls(figmaToken, fileKey, ids, format);
+                Dictionary<string, string> downloadUrls = GetExportUrls(figmaToken, fileKey, formatChilds.Select(c => c.Id), format);
                 downloadUrls.AsParallel().ForAll(dl =>
                 {
                     string name = formatChilds.Where(c => c.Id == dl.Key).First().Name.Trim();
