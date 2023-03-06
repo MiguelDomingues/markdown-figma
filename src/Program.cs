@@ -49,7 +49,7 @@ namespace MarkdownFigma
 
         [Option("--report", "File to output the markdown report", CommandOptionType.SingleValue)]
         public string ReportFile { get; private set; } = null;
-        public StringBuilder Report { get; private set; } = null;
+        public StreamWriter Report { get; private set; } = null;
 
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
@@ -61,20 +61,21 @@ namespace MarkdownFigma
             Log.Information("File pattern is: {FilePattern}", FilePattern);
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
             if (ReportFile != null)
-                Report = new StringBuilder();
+                Report = new StreamWriter(ReportFile);
 
             try
             {
                 ScanDirectory(InputDirectory);
                 if (Report != null)
                 {
-                    Report.AppendLine("**Summary:**");
-                    Report.AppendLine();
-                    Report.AppendLine("Downloaded files: " + FigmaAPI.DOWNLOADS_COUNT);
-                    Report.AppendLine();
-                    Report.AppendLine("Downloaded size: " + BytesToString(FigmaAPI.DOWNLOADS_SIZE));
+                    Report.WriteLine("**Summary:**");
+                    Report.WriteLine();
+                    Report.WriteLine("Downloaded files: " + FigmaAPI.DOWNLOADS_COUNT);
+                    Report.WriteLine();
+                    Report.WriteLine("Downloaded size: " + BytesToString(FigmaAPI.DOWNLOADS_SIZE));
 
-                    File.WriteAllText(ReportFile, Report.ToString());
+                    Report.Flush();
+                    Report.Close();
                 }
                 return 0;
             }
@@ -188,35 +189,35 @@ namespace MarkdownFigma
             {
                 if (updatedAssets.Any(ua => ua.Action != UpdateAction.NONE))
                 {
-                    Report.AppendLine(":memo: " + filePath + " ([Figma](" + figmaURL + "))");
-                    Report.AppendLine();
-                    Report.AppendLine("Visual Asset | Status");
-                    Report.AppendLine("------------ | ------");
+                    Report.WriteLine(":memo: " + filePath + " ([Figma](" + figmaURL + "))");
+                    Report.WriteLine();
+                    Report.WriteLine("Visual Asset | Status");
+                    Report.WriteLine("------------ | ------");
 
                     foreach (UpdateReport ur in updatedAssets)
                     {
                         switch (ur.Action)
                         {
                             case UpdateAction.UPDATE_SIMILARITY:
-                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Similarity @ " + ur.Similarity.ToString("0.##") + " %");
+                                Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Similarity @ " + ur.Similarity.ToString("0.##") + " %");
                                 break;
                             case UpdateAction.UPDATE:
-                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Update");
+                                Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Update");
                                 break;
                             case UpdateAction.DELETE:
-                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Delete");
+                                Report.WriteLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Delete");
                                 break;
                             case UpdateAction.FIGMA_MISSING:
-                                Report.AppendLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Missing in Figma");
+                                Report.WriteLine(ExportFolder + Path.DirectorySeparatorChar + ur.Name + " | Missing in Figma");
                                 break;
                             case UpdateAction.UNUSED:
-                                Report.AppendLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Not used");
+                                Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Not used");
                                 break;
                             case UpdateAction.NONE:
                                 break;
                         }
                     }
-                    Report.AppendLine();
+                    Report.WriteLine();
                 }
             }
         }
