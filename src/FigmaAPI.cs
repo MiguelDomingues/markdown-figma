@@ -89,7 +89,23 @@ namespace MarkdownFigma
 
         private static Dictionary<string, string> GetExportUrls(string token, string key, IEnumerable<string> ids, FigmaFormat format)
         {
+            try
+            {
             Log.Information("Obtaining download urls for {Count} {Format} elements...", ids.Count(), format);
+                string idsStr = string.Join(",", ids);
+                FigmaImagesExport f = Get<FigmaImagesExport>(token, $"images/{key}?ids={idsStr}&format={format.ToString().ToLower()}", null);
+
+                return f.Images;
+            }
+            catch
+            {
+                Log.Warning("Export using single request failed. Switching to independent export mode...");
+                return GetExportUrlsParallel(token, key, ids, format);
+            }
+        }
+
+        private static Dictionary<string, string> GetExportUrlsParallel(string token, string key, IEnumerable<string> ids, FigmaFormat format)
+        {
             ConcurrentDictionary<string, string> result = new ConcurrentDictionary<string, string>();
             ids.AsParallel().WithDegreeOfParallelism(NUMBER_OF_THREADS).ForAll(id =>
             {
