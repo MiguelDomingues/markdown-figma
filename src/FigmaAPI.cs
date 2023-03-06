@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using MarkdownFigma.Figma;
 using Newtonsoft.Json;
@@ -54,19 +55,21 @@ namespace MarkdownFigma
                     builder.Query = query;
                 Log.Debug("GET " + builder.Path + builder.Query);
 
-                using HttpResponseMessage response = client.GetAsync(builder.Uri).GetAwaiter().GetResult();
-                string rawResponse = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                Log.Debug("RESPONSE: {JSON}", rawResponse);
-                if (response.IsSuccessStatusCode)
-                    return JsonConvert.DeserializeObject<T>(rawResponse);
-                else if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                using (HttpResponseMessage response = client.GetAsync(builder.Uri).GetAwaiter().GetResult())
                 {
-                    Log.Warning("Too Many Requests received from Figma API. Sleeping...");
-                    Thread.Sleep(WAIT_MS_TOO_MANY_REQUESTS);
-                    return Get<T>(token, path, query, retries - 1);
+                    string rawResponse = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    Log.Debug("RESPONSE: {JSON}", rawResponse);
+                    if (response.IsSuccessStatusCode)
+                        return JsonConvert.DeserializeObject<T>(rawResponse);
+                    else if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                    {
+                        Log.Warning("Too Many Requests received from Figma API. Sleeping...");
+                        Thread.Sleep(WAIT_MS_TOO_MANY_REQUESTS);
+                        return Get<T>(token, path, query, retries - 1);
+                    }
+                    else
+                        throw new Exception("Figma API Error: " + rawResponse);
                 }
-                else
-                    throw new Exception("Figma API Error: " + rawResponse);
             }
             catch (Exception e)
             {
@@ -189,98 +192,92 @@ namespace MarkdownFigma
                     Log.Information("Downloading {Name} ({Id}) from {Url}", name + extension, dl.Key, dl.Value);
                     string destination = Path.Combine(exportPath, name + extension);
 
-                    using (MemoryStream originalFile = new MemoryStream())
+                    byte[] originalFile = null;
+                    if (File.Exists(destination))
                     {
-                        if (File.Exists(destination))
+                        originalFile = File.ReadAllBytes(destination);
+                    }
+
+                    byte[] newImage = DownloadFile(dl.Value, destination);
+                    if (!File.Exists(destination))
+                    {
+                        Log.Information("Writing {Name} to {Path}", name + extension, destination);
+                        File.WriteAllBytes(destination, newImage);
+                    }
+                    else if (format == FigmaFormat.SVG)
+                    {
+                        byte[] originalPNG = ImageUtils.svg2png(originalFile);
+                        byte[] newPNG = ImageUtils.svg2png(newImage);
+                        double similarity = ImageUtils.GetSimilarity(originalPNG, newPNG);
+                        if (similarity < threshold)
                         {
-                            using (FileStream source = File.Open(destination, FileMode.Open))
+                            Log.Information("Writing {Name} to {Path} since similarity is {Similarity} % (below threshold of {Threshold} %)", name + extension, destination, similarity, threshold);
+                            File.WriteAllBytes(destination, newImage);
+                            updatedAssets.Add(new UpdateReport()
                             {
-                                source.CopyTo(originalFile);
-                                originalFile.Seek(0, SeekOrigin.Begin);
-                            }
+                                Name = name + extension,
+                                Similarity = similarity,
+                                Action = UpdateAction.UPDATE_SIMILARITY,
+                                URL = GetFigmaURL(fileKey, dl.Key),
+                            });
                         }
-                        byte[] newImage = DownloadFile(dl.Value, destination);
-                        if (!File.Exists(destination))
+                        else if (!svgVisualCheckOnly && !originalFile.SequenceEqual(newImage))
                         {
                             Log.Information("Writing {Name} to {Path}", name + extension, destination);
                             File.WriteAllBytes(destination, newImage);
-                        }
-                        else if (format == FigmaFormat.SVG)
-                        {
-                            byte[] originalPNG = ImageUtils.svg2png(originalFile.ToArray());
-                            byte[] newPNG = ImageUtils.svg2png(newImage);
-                            using var newPNGStream = new MemoryStream(newPNG);
-                            using var originalPNGStream = new MemoryStream(originalPNG);
-                            double similarity = ImageUtils.GetSimilarity(originalPNGStream, newPNGStream);
-                            if (similarity < threshold)
+                            updatedAssets.Add(new UpdateReport()
                             {
-                                Log.Information("Writing {Name} to {Path} since similarity is {Similarity} % (below threshold of {Threshold} %)", name + extension, destination, similarity, threshold);
-                                File.WriteAllBytes(destination, newImage);
-                                updatedAssets.Add(new UpdateReport()
-                                {
-                                    Name = name + extension,
-                                    Similarity = similarity,
-                                    Action = UpdateAction.UPDATE_SIMILARITY,
-                                    URL = GetFigmaURL(fileKey, dl.Key),
-                                });
-                            }
-                            else if (!svgVisualCheckOnly && !originalFile.ToArray().SequenceEqual(newImage))
-                            {
-                                Log.Information("Writing {Name} to {Path}", name + extension, destination);
-                                File.WriteAllBytes(destination, newImage);
-                                updatedAssets.Add(new UpdateReport()
-                                {
-                                    Name = name + extension,
-                                    Similarity = similarity,
-                                    Action = UpdateAction.UPDATE,
-                                    URL = GetFigmaURL(fileKey, dl.Key),
-                                });
-                            }
-                            else
-                            {
-                                updatedAssets.Add(new UpdateReport()
-                                {
-                                    Name = name + extension,
-                                    Similarity = similarity,
-                                    Action = UpdateAction.NONE,
-                                    URL = GetFigmaURL(fileKey, dl.Key),
-                                });
-                            }
-                        }
-                        else if (format == FigmaFormat.PNG)
-                        {
-                            using var newFile = new MemoryStream(newImage);
-                            double similarity = ImageUtils.GetSimilarity(originalFile, newFile);
-                            if (similarity < threshold)
-                            {
-                                Log.Information("Writing {Name} to {Path} since similarity is {Similarity} % (below threshold of {Threshold} %)", name + extension, destination, similarity, threshold);
-                                File.WriteAllBytes(destination, newImage);
-                                updatedAssets.Add(new UpdateReport()
-                                {
-                                    Name = name + extension,
-                                    Similarity = similarity,
-                                    Action = UpdateAction.UPDATE_SIMILARITY,
-                                    URL = GetFigmaURL(fileKey, dl.Key),
-                                });
-                            }
-                            else
-                            {
-                                updatedAssets.Add(new UpdateReport()
-                                {
-                                    Name = name + extension,
-                                    Similarity = similarity,
-                                    Action = UpdateAction.NONE,
-                                    URL = GetFigmaURL(fileKey, dl.Key),
-                                });
-                            }
+                                Name = name + extension,
+                                Similarity = similarity,
+                                Action = UpdateAction.UPDATE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
+                            });
                         }
                         else
                         {
-                            throw new Exception("Unsupported format.");
+                            updatedAssets.Add(new UpdateReport()
+                            {
+                                Name = name + extension,
+                                Similarity = similarity,
+                                Action = UpdateAction.NONE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
+                            });
                         }
-                        DOWNLOADS_COUNT++;
-                        DOWNLOADS_SIZE += newImage.Length;
+
                     }
+                    else if (format == FigmaFormat.PNG)
+                    {
+                        double similarity = ImageUtils.GetSimilarity(originalFile, newImage);
+                        if (similarity < threshold)
+                        {
+                            Log.Information("Writing {Name} to {Path} since similarity is {Similarity} % (below threshold of {Threshold} %)", name + extension, destination, similarity, threshold);
+                            File.WriteAllBytes(destination, newImage);
+                            updatedAssets.Add(new UpdateReport()
+                            {
+                                Name = name + extension,
+                                Similarity = similarity,
+                                Action = UpdateAction.UPDATE_SIMILARITY,
+                                URL = GetFigmaURL(fileKey, dl.Key),
+                            });
+                        }
+                        else
+                        {
+                            updatedAssets.Add(new UpdateReport()
+                            {
+                                Name = name + extension,
+                                Similarity = similarity,
+                                Action = UpdateAction.NONE,
+                                URL = GetFigmaURL(fileKey, dl.Key),
+                            });
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Unsupported format.");
+                    }
+                    DOWNLOADS_COUNT++;
+                    DOWNLOADS_SIZE += newImage.Length;
+
                 });
             }
             return updatedAssets;
