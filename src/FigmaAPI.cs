@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web;
 using MarkdownFigma.Figma;
 using Newtonsoft.Json;
@@ -23,6 +24,7 @@ namespace MarkdownFigma
         public static int DOWNLOADS_SIZE = 0;
 
         public static int NUMBER_OF_THREADS { get; private set; } = Math.Max(Environment.ProcessorCount, 4);
+        public static int WAIT_MS_TOO_MANY_REQUESTS { get; } = 10000;
 
         private static HttpClient GetHTTPClient(string token)
         {
@@ -52,6 +54,12 @@ namespace MarkdownFigma
                 Log.Debug("RESPONSE: {JSON}", rawResponse);
                 if (response.IsSuccessStatusCode)
                     return JsonConvert.DeserializeObject<T>(rawResponse);
+                else if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    Log.Warning("Too Many Requests received from Figma API. Sleeping...");
+                    Thread.Sleep(WAIT_MS_TOO_MANY_REQUESTS);
+                    return Get<T>(token, path, query, retries - 1);
+                }
                 else
                     throw new Exception("Figma API Error: " + rawResponse);
             }
