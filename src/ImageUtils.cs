@@ -1,23 +1,24 @@
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using CoenM.ImageHash;
 using CoenM.ImageHash.HashAlgorithms;
-using Markdig;
-using Markdig.Extensions.Yaml;
-using Markdig.Renderers;
-using Markdig.Syntax;
-using Serilog;
-using Svg;
-using YamlDotNet.Serialization;
+using SkiaSharp;
+using Svg.Skia;
 
 namespace MarkdownFigma
 {
     class ImageUtils
     {
 
-        public static double GetSimilarity(Stream originalImage, Stream otherImage)
+        public static double GetSimilarity(byte[] originalImage, byte[] otherImage)
+        {
+            using (MemoryStream original = new MemoryStream(originalImage))
+            using (MemoryStream other = new MemoryStream(otherImage))
+            {
+                return GetSimilarity(original, other);
+            }
+        }
+
+        private static double GetSimilarity(Stream originalImage, Stream otherImage)
         {
             var hashAlgorithm = new AverageHash();
 
@@ -28,17 +29,32 @@ namespace MarkdownFigma
             return percentageImageSimilarity;
         }
 
-        public static byte[] svg2png(byte[] svg)
+        public static byte[] svg2png(byte[] svgArray)
         {
-            using Stream svgStream = new MemoryStream(svg);
-
-            SvgDocument doc = Svg.SvgDocument.Open<SvgDocument>(svgStream);
-
-            using Bitmap bmp = doc.Draw();
-            using MemoryStream pngStream = new MemoryStream();
-            bmp.Save(pngStream, ImageFormat.Png);
-
-            return pngStream.ToArray();
+            using (var svg = new SKSvg())
+            using (MemoryStream svgStream = new MemoryStream(svgArray))
+            {
+                if (svg.Load(svgStream) is { })
+                {
+                    using (var stream = new MemoryStream())
+                    {
+                        svg.Picture.ToImage(stream,
+                            background: SKColors.Empty,
+                            format: SKEncodedImageFormat.Png,
+                            quality: 90,
+                            scaleX: 1f,
+                            scaleY: 1f,
+                            skColorType: SKImageInfo.PlatformColorType,
+                            skAlphaType: SKAlphaType.Unpremul,
+                            skColorSpace: SKColorSpace.CreateRgb(SKColorSpaceTransferFn.Srgb, SKColorSpaceXyz.Srgb));
+                        return stream.ToArray();
+                    }
+                }
+                else
+                {
+                    throw new System.Exception("Failed to convert to png");
+                }
+            }
         }
     }
 }
