@@ -165,7 +165,7 @@ namespace MarkdownFigma
                 if (formatChilds.Count() == 0)
                     continue;
                 Dictionary<string, string> downloadUrls = GetExportUrls(figmaToken, fileKey, formatChilds.Select(c => c.Id), format);
-                downloadUrls.AsParallel().ForAll(dl =>
+                downloadUrls.AsParallel().WithDegreeOfParallelism(NUMBER_OF_THREADS).ForAll(dl =>
                 {
                     string name = formatChilds.Where(c => c.Id == dl.Key).First().Name.Trim();
                     string fixedName = ReplaceInvalidChars(name);
