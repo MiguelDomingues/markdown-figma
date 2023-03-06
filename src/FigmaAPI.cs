@@ -24,7 +24,7 @@ namespace MarkdownFigma
         public static int DOWNLOADS_SIZE = 0;
 
         public static int NUMBER_OF_THREADS { get; private set; } = Math.Max(Environment.ProcessorCount, 4);
-        public static int WAIT_MS_TOO_MANY_REQUESTS { get; } = 10000;
+        public static int WAIT_MS_TOO_MANY_REQUESTS { get; } = 20000;
 
         private static HttpClient GetHTTPClient(string token)
         {
