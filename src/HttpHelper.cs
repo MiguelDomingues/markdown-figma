@@ -49,24 +49,27 @@ namespace MarkdownFigma
 
         internal static byte[] TaskHTTPRequest(HttpMethod method, string url, string content, Dictionary<string, string> headers)
         {
-            using var client = new HttpClient();
-            client.Timeout = TimeSpan.FromMinutes(5);
-            using var httpRequestMessage = new HttpRequestMessage
+            using (var client = new HttpClient())
             {
-                Method = method,
-                RequestUri = new Uri(url),
-                Content = content != null ? new StringContent(content) : null
-            };
+                client.Timeout = TimeSpan.FromMinutes(5);
+                using (var httpRequestMessage = new HttpRequestMessage
+                {
+                    Method = method,
+                    RequestUri = new Uri(url),
+                    Content = content != null ? new StringContent(content) : null
+                })
+                {
+                    if (headers != null)
+                        foreach (KeyValuePair<string, string> h in headers)
+                            httpRequestMessage.Headers.Add(h.Key, h.Value);
 
-            if (headers != null)
-                foreach (KeyValuePair<string, string> h in headers)
-                    httpRequestMessage.Headers.Add(h.Key, h.Value);
+                    var result = client.SendAsync(httpRequestMessage).GetAwaiter().GetResult();
+                    if (result.IsSuccessStatusCode)
+                        return result.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
 
-            var result = client.SendAsync(httpRequestMessage).GetAwaiter().GetResult();
-            if (result.IsSuccessStatusCode)
-                return result.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
-
-            return null;
+                    return null;
+                }
+            }
         }
 
     }
