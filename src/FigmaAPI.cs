@@ -26,23 +26,28 @@ namespace MarkdownFigma
         public static int NUMBER_OF_THREADS { get; private set; } = Math.Max(Environment.ProcessorCount, 4);
         public static int WAIT_MS_TOO_MANY_REQUESTS { get; } = 20000;
 
+        private static HttpClient CLIENT = null;
+
         private static HttpClient GetHTTPClient(string token)
         {
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(FIGMA_API_ENDPOINT);
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            if (CLIENT == null)
+            {
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(FIGMA_API_ENDPOINT);
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            client.DefaultRequestHeaders.Add(FIGMA_API_HEADER, token);
-
-            return client;
+                client.DefaultRequestHeaders.Add(FIGMA_API_HEADER, token);
+                CLIENT = client;
+            }
+            return CLIENT;
         }
 
         private static T Get<T>(string token, string path, string query, int retries = 3)
         {
             try
             {
-                using HttpClient client = GetHTTPClient(token);
+                HttpClient client = GetHTTPClient(token);
 
                 UriBuilder builder = new UriBuilder(client.BaseAddress + path);
                 if (query != null && query != "")

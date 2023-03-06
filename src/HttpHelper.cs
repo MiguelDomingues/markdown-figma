@@ -49,9 +49,9 @@ namespace MarkdownFigma
 
         internal static byte[] TaskHTTPRequest(HttpMethod method, string url, string content, Dictionary<string, string> headers)
         {
-            var client = new HttpClient();
+            using var client = new HttpClient();
             client.Timeout = TimeSpan.FromMinutes(5);
-            var httpRequestMessage = new HttpRequestMessage
+            using var httpRequestMessage = new HttpRequestMessage
             {
                 Method = method,
                 RequestUri = new Uri(url),

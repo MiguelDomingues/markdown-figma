@@ -30,12 +30,12 @@ namespace MarkdownFigma
 
         public static byte[] svg2png(byte[] svg)
         {
-            Stream svgStream = new MemoryStream(svg);
+            using Stream svgStream = new MemoryStream(svg);
 
             SvgDocument doc = Svg.SvgDocument.Open<SvgDocument>(svgStream);
 
-            Bitmap bmp = doc.Draw();
-            MemoryStream pngStream = new MemoryStream();
+            using Bitmap bmp = doc.Draw();
+            using MemoryStream pngStream = new MemoryStream();
             bmp.Save(pngStream, ImageFormat.Png);
 
             return pngStream.ToArray();
