@@ -227,7 +227,7 @@ namespace MarkdownFigma
             if (MaxUpdates <= 0)
                 return true;
 
-            IEnumerable<UpdateReport> updates = Updates.SelectMany(kv => kv.Value).Where(u => u.Action != UpdateAction.NONE && u.Action != UpdateAction.FIGMA_MISSING && u.Action != UpdateAction.UNUSED);
+            IEnumerable<UpdateReport> updates = Updates.SelectMany(kv => kv.Value).Where(u => u.Action != UpdateAction.NONE && u.Action != UpdateAction.UNUSED);
             if (updates.Count() < MaxUpdates)
                 return true;
 
