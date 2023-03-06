@@ -107,7 +107,7 @@ namespace MarkdownFigma
 
         private void ScanDirectory(string path)
         {
-            if (!AboveMaxUpdates())
+            if (AboveMaxUpdates())
                 return;
             Log.Information("Scanning directory {Path}", path);
 
@@ -124,7 +124,7 @@ namespace MarkdownFigma
 
         public void ProcessFile(string filePath)
         {
-            if (!AboveMaxUpdates())
+            if (AboveMaxUpdates())
                 return;
 
             string fileName = Path.GetFileName(filePath);
@@ -230,7 +230,7 @@ namespace MarkdownFigma
             bool fileChanges = Updates.SelectMany(kv => kv.Value).Any(u => u.Action == UpdateAction.DELETE || u.Action == UpdateAction.UPDATE_SIMILARITY || u.Action == UpdateAction.UPDATE);
 
             IEnumerable<UpdateReport> updates = Updates.SelectMany(kv => kv.Value).Where(u => u.Action != UpdateAction.NONE);
-            if (updates.Count() < MaxUpdates && fileChanges)
+            if (updates.Count() > MaxUpdates && fileChanges)
                 return true;
 
             return false;
