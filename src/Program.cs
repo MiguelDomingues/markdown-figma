@@ -113,11 +113,13 @@ namespace MarkdownFigma
 
             Log.Debug("Retrieving files from {Path}", path);
             string[] fileEntries = Directory.GetFiles(path, FilePattern);
+            Array.Sort(fileEntries);
             foreach (string fileName in fileEntries)
                 ProcessFile(fileName);
 
             // Recurse into subdirectories of this directory.
             string[] subdirectoryEntries = Directory.GetDirectories(path);
+            Array.Sort(subdirectoryEntries);
             foreach (string subdirectory in subdirectoryEntries)
                 ScanDirectory(subdirectory);
         }
