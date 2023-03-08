@@ -133,11 +133,7 @@ namespace MarkdownFigma
             string fileKey = figmaURL.Substring(figmaURL.IndexOf("figma.com/file") + 15);
             fileKey = fileKey.Substring(0, fileKey.IndexOf("/"));
             List<UpdateReport> updatedAssets = new List<UpdateReport>();
-
-            string nodeId = figmaURL.Substring(figmaURL.IndexOf("node-id=") + 8);
-            nodeId = HttpUtility.UrlDecode(nodeId);
-            if (nodeId.Contains("&"))
-                nodeId = nodeId.Substring(0, nodeId.IndexOf("&"));
+            string nodeId = GetFigmaNodeId(figmaURL);
 
             FigmaNode node = GetFileNode(figmaToken, fileKey, nodeId);
 
@@ -281,6 +277,17 @@ namespace MarkdownFigma
                 });
             }
             return updatedAssets;
+        }
+
+        private static string GetFigmaNodeId(string figmaURL)
+        {
+            string nodeId = figmaURL.Substring(figmaURL.IndexOf("node-id=") + 8);
+            nodeId = HttpUtility.UrlDecode(nodeId);
+            if (nodeId.Contains("&"))
+                nodeId = nodeId.Substring(0, nodeId.IndexOf("&"));
+            if (nodeId.Contains("-"))
+                nodeId = nodeId.Replace('-', ':');
+            return nodeId;
         }
 
         private static string ReplaceInvalidChars(string filename)
