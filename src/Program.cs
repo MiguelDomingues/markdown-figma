@@ -21,7 +21,6 @@ namespace MarkdownFigma
         public string Input { get; }
 
         [Option(Template = "--pattern", Description = "File name pattern. Ignored if input is a file.")]
-        [Required]
         public string FilePattern { get; }
 
         [Option(Template = "--export", Description = "Export folder name")]
