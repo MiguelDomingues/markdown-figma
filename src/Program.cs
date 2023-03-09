@@ -51,6 +51,9 @@ namespace MarkdownFigma
         public string ReportFile { get; private set; } = null;
         public StreamWriter Report { get; private set; } = null;
 
+        [Option("--report-append", "Append to the report file if it exists.", CommandOptionType.NoValue)]
+        public bool ReportAppend { get; private set; } = false;
+
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
         private int OnExecute()
@@ -61,7 +64,7 @@ namespace MarkdownFigma
             Log.Information("File pattern is: {FilePattern}", FilePattern);
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
             if (ReportFile != null)
-                Report = new StreamWriter(ReportFile);
+                Report = new StreamWriter(ReportFile, ReportAppend);
 
             try
             {

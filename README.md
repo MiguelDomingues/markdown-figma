@@ -39,6 +39,7 @@ Argument | Expected Value | Required
 --svg-visual-check-only | Compare SVG files visually instead | No
 --max-updates | Maximum number of updates before exiting. Use 0 to denote all | No
 --report | File to write the markdown report summary to | No
+--report-append | Append to existing report file. Default is to NOT append | No
 
 Sample usage:
 
