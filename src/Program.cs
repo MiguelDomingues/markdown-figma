@@ -16,11 +16,11 @@ namespace MarkdownFigma
         public static int Main(string[] args)
             => CommandLineApplication.Execute<Program>(args);
 
-        [Option(Template = "--input", Description = "The file to scan for files")]
+        [Option(Template = "--input", Description = "The directory to scan for files or a file")]
         [Required]
-        public string InputDirectory { get; }
+        public string Input { get; }
 
-        [Option(Template = "--pattern", Description = "File name pattern")]
+        [Option(Template = "--pattern", Description = "File name pattern. Ignored if input is a file.")]
         [Required]
         public string FilePattern { get; }
 
@@ -57,7 +57,7 @@ namespace MarkdownFigma
         {
             SetupLogger();
 
-            Log.Information("Scan directory: {Directory}", InputDirectory);
+            Log.Information("Scan directory: {Directory}", Input);
             Log.Information("File pattern is: {FilePattern}", FilePattern);
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
             if (ReportFile != null)
@@ -65,7 +65,13 @@ namespace MarkdownFigma
 
             try
             {
-                ScanDirectory(InputDirectory);
+                FileAttributes attr = File.GetAttributes(Input);
+
+                if (attr.HasFlag(FileAttributes.Directory))
+                    ScanDirectory(Input);
+                else
+                    ProcessFile(Input);
+
                 if (Report != null)
                 {
                     Report.WriteLine("**Summary:**");

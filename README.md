@@ -30,7 +30,7 @@ The following arguments are available:
 
 Argument | Expected Value | Required
 ---------|----------|---------
---input <path> | Specify a path to be scanned recursively | Yes
+--input <path> | Specify a directory to be scanned recursively or a single file | Yes
 --pattern <pattern> | A file name pattern to use (e.g. *.md). Only matching file names will be inspected. | Yes
 --export <folder> | The folder to be created at the level where the inspected file is | Yes
 --empty-export-folder | If used, all existing files will be deleted from the export folder defined with `--export`  | No
