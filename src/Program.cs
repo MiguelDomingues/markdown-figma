@@ -235,7 +235,7 @@ namespace MarkdownFigma
         private bool AboveMaxUpdates()
         {
             if (MaxUpdates <= 0)
-                return true;
+                return false;
 
             bool fileChanges = Updates.SelectMany(kv => kv.Value).Any(u => u.Action == UpdateAction.DELETE || u.Action == UpdateAction.UPDATE_SIMILARITY || u.Action == UpdateAction.UPDATE);
 
