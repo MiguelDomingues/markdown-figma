@@ -59,7 +59,7 @@ namespace MarkdownFigma
         {
             SetupLogger();
 
-            Log.Information("Scan directory: {Directory}", Input);
+            Log.Information("Input: {Directory}", Input);
             Log.Information("File pattern is: {FilePattern}", FilePattern);
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
             if (ReportFile != null)
