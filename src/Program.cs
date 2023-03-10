@@ -74,13 +74,16 @@ namespace MarkdownFigma
                 else
                     ProcessFile(Input);
 
-                if (Report != null && !ReportAppend)
+                if (Report != null)
                 {
-                    Report.WriteLine("**Summary:**");
-                    Report.WriteLine();
-                    Report.WriteLine("Downloaded files: " + FigmaAPI.DOWNLOADS_COUNT);
-                    Report.WriteLine();
-                    Report.WriteLine("Downloaded size: " + BytesToString(FigmaAPI.DOWNLOADS_SIZE));
+                    if (!ReportAppend)
+                    {
+                        Report.WriteLine("**Summary:**");
+                        Report.WriteLine();
+                        Report.WriteLine("Downloaded files: " + FigmaAPI.DOWNLOADS_COUNT);
+                        Report.WriteLine();
+                        Report.WriteLine("Downloaded size: " + BytesToString(FigmaAPI.DOWNLOADS_SIZE));
+                    }
 
                     Report.Flush();
                     Report.Close();
