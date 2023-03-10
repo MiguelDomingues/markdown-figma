@@ -74,7 +74,7 @@ namespace MarkdownFigma
                 else
                     ProcessFile(Input);
 
-                if (Report != null)
+                if (Report != null && !ReportAppend)
                 {
                     Report.WriteLine("**Summary:**");
                     Report.WriteLine();
