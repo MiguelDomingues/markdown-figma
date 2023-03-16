@@ -8,6 +8,7 @@ using Serilog.Events;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static MarkdownFigma.Figma.MarkdownFigmaSettings;
 
 namespace MarkdownFigma
 {
@@ -172,12 +173,19 @@ namespace MarkdownFigma
                         }
                         else if (images.Any(i => i == fname))
                         {
-                            deletedAssets.Add(new UpdateReport()
+                            if (!Enum.GetValues(typeof(FigmaFormat)).Cast<FigmaFormat>().Any(ff => Enum.GetName(typeof(FigmaFormat), ff).ToLower() == Path.GetExtension(fname).Substring(1)))
                             {
-                                Name = fname,
-                                Similarity = 0,
-                                Action = UpdateAction.FIGMA_MISSING,
-                            });
+                                Log.Information("Ignoring {File} due to its extension.", fname);
+                            }
+                            else
+                            {
+                                deletedAssets.Add(new UpdateReport()
+                                {
+                                    Name = fname,
+                                    Similarity = 0,
+                                    Action = UpdateAction.FIGMA_MISSING,
+                                });
+                            }
                         }
                         else
                         {
