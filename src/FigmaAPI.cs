@@ -200,7 +200,13 @@ namespace MarkdownFigma
 
                     if (!ignoreDuplicates && filenames.ContainsKey(name))
                     {
-                        throw new Exception("Duplicated element with name '" + name + extension + "' at " + GetFigmaURL(fileKey, dl.Key));
+                        Log.Warning("Duplicated element with name '" + name + extension + "' at " + GetFigmaURL(fileKey, dl.Key));
+                        updatedAssets.Add(new UpdateReport()
+                        {
+                            Name = name + extension,
+                            Action = UpdateAction.DUPLICATE,
+                            URL = GetFigmaURL(fileKey, dl.Key),
+                        });
                     }
                     filenames.TryAdd(name, null);
 

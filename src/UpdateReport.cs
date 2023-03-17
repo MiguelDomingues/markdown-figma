@@ -9,6 +9,7 @@ namespace MarkdownFigma
         FIGMA_MISSING,
         UNUSED,
         NOT_TOP_LEVEL,
+        DUPLICATE,
     }
 
     internal class UpdateReport
