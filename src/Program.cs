@@ -219,6 +219,9 @@ namespace MarkdownFigma
                     {
                         switch (ur.Action)
                         {
+                            case UpdateAction.NOT_TOP_LEVEL:
+                                Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Not at top-level");
+                                break;
                             case UpdateAction.UPDATE_SIMILARITY:
                                 Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Similarity @ " + ur.Similarity.ToString("0.##") + " %");
                                 break;

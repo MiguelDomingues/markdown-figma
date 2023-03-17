@@ -137,7 +137,24 @@ namespace MarkdownFigma
 
             FigmaNode node = GetFileNode(figmaToken, fileKey, nodeId);
 
-            IEnumerable<FigmaChild> dupExport = node.Document.Children.Where(c => c.ExportSettings != null && c.ExportSettings.Count() > 1);
+            IEnumerable<FigmaChild> descendants = node.Document.Children.SelectRecursive(c => c.Children).Where(c => c.ExportSettings != null);
+
+            IEnumerable<string> topLevelNodeIds = node.Document.Children.Select(c => c.Id);
+            foreach (FigmaChild fg in descendants.Where(c => !topLevelNodeIds.Any(tl => tl == c.Id)))
+            {
+                foreach (MarkdownFigmaSettings exp in fg.ExportSettings)
+                {
+                    Log.Warning("{Name} is not defined at the top-level", fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(), GetFigmaURL(fileKey, fg.Id));
+                    updatedAssets.Add(new UpdateReport()
+                    {
+                        Name = fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(),
+                        Action = UpdateAction.NOT_TOP_LEVEL,
+                        URL = GetFigmaURL(fileKey, fg.Id),
+                    });
+                }
+            }
+
+            IEnumerable<FigmaChild> dupExport = descendants.Where(c => c.ExportSettings.Count() > 1);
             if (dupExport.Count() > 0)
             {
                 foreach (FigmaChild c in dupExport)
@@ -146,16 +163,16 @@ namespace MarkdownFigma
                 }
             }
 
-            IEnumerable<FigmaChild> childs = node.Document.Children.Where(c => c.Visible && c.ExportSettings != null && c.ExportSettings.Count() > 0);
+            IEnumerable<FigmaChild> childs = node.Document.Children.Where(c => c.ExportSettings != null && c.ExportSettings.Count() > 0);
             Log.Information("Found {Count} elements to export.", childs.Count());
 
             foreach (FigmaFormat format in Enum.GetValues(typeof(FigmaFormat)))
             {
                 string extension = "." + Enum.GetName(typeof(FigmaFormat), format).ToLower();
                 ConcurrentDictionary<string, object> filenames = new ConcurrentDictionary<string, object>();
-                IEnumerable<FigmaChild> formatChilds = childs.Where(c => c.ExportSettings != null && c.ExportSettings.Any(e => e.Format == format));
+                IEnumerable<FigmaChild> formatChilds = childs.Where(c => c.ExportSettings.Any(e => e.Format == format));
                 formatChilds = formatChilds.Where(c => includeOnly == null || includeOnly.Any(f => f == c.Name + extension));
-                IEnumerable<FigmaChild> unused = childs.Where(c => c.ExportSettings != null && c.ExportSettings.Any(e => e.Format == format)).Where(c => !formatChilds.Any(f => f.Id == c.Id));
+                IEnumerable<FigmaChild> unused = childs.Where(c => c.ExportSettings.Any(e => e.Format == format)).Where(c => !formatChilds.Any(f => f.Id == c.Id));
                 foreach (FigmaChild u in unused)
                 {
                     Log.Warning("{Name} has an export defined but is not used. {URL}", u.Name + extension, GetFigmaURL(fileKey, u.Id));
@@ -182,7 +199,9 @@ namespace MarkdownFigma
                         throw new Exception("Element " + dl.Key + " does not have a name defined. Check " + GetFigmaURL(fileKey, dl.Key));
 
                     if (!ignoreDuplicates && filenames.ContainsKey(name))
+                    {
                         throw new Exception("Duplicated element with name '" + name + extension + "' at " + GetFigmaURL(fileKey, dl.Key));
+                    }
                     filenames.TryAdd(name, null);
 
                     Log.Information("Downloading {Name} ({Id}) from {Url}", name + extension, dl.Key, dl.Value);

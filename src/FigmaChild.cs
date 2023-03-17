@@ -19,5 +19,7 @@ namespace MarkdownFigma.Figma
         [JsonProperty("exportSettings")]
         public List<MarkdownFigmaSettings> ExportSettings { get; internal set; }
 
+        [JsonProperty("children")]
+        public List<FigmaChild> Children { get; internal set; }
     }
 }

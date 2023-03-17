@@ -8,6 +8,7 @@ namespace MarkdownFigma
         DELETE,
         FIGMA_MISSING,
         UNUSED,
+        NOT_TOP_LEVEL,
     }
 
     internal class UpdateReport
