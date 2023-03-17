@@ -219,6 +219,9 @@ namespace MarkdownFigma
                     {
                         switch (ur.Action)
                         {
+                            case UpdateAction.HIDDEN:
+                                Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Hidden");
+                                break;
                             case UpdateAction.DUPLICATE:
                                 Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Duplicated");
                                 break;

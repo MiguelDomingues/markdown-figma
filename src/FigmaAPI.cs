@@ -144,7 +144,7 @@ namespace MarkdownFigma
             {
                 foreach (MarkdownFigmaSettings exp in fg.ExportSettings)
                 {
-                    Log.Warning("{Name} is not defined at the top-level", fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(), GetFigmaURL(fileKey, fg.Id));
+                    Log.Warning("{Name} is not defined at the top-level {URL}", fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(), GetFigmaURL(fileKey, fg.Id));
                     updatedAssets.Add(new UpdateReport()
                     {
                         Name = fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(),
@@ -163,7 +163,25 @@ namespace MarkdownFigma
                 }
             }
 
-            IEnumerable<FigmaChild> childs = node.Document.Children.Where(c => c.ExportSettings != null && c.ExportSettings.Count() > 0);
+            IEnumerable<FigmaChild> hidden = descendants.Where(c => c.ExportSettings.Count() > 0 && !c.Visible);
+            if (hidden.Count() > 0)
+            {
+                foreach (FigmaChild fg in hidden)
+                {
+                    foreach (MarkdownFigmaSettings exp in fg.ExportSettings)
+                    {
+                        Log.Warning("{Name} has exports but is hidden {URL}", fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(), GetFigmaURL(fileKey, fg.Id));
+                        updatedAssets.Add(new UpdateReport()
+                        {
+                            Name = fg.Name + "." + Enum.GetName(typeof(FigmaFormat), exp.Format).ToLower(),
+                            Action = UpdateAction.HIDDEN,
+                            URL = GetFigmaURL(fileKey, fg.Id),
+                        });
+                    }
+                }
+            }
+
+            IEnumerable<FigmaChild> childs = node.Document.Children.Where(c => c.Visible && c.ExportSettings != null && c.ExportSettings.Count() > 0);
             Log.Information("Found {Count} elements to export.", childs.Count());
 
             foreach (FigmaFormat format in Enum.GetValues(typeof(FigmaFormat)))
