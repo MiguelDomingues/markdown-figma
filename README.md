@@ -40,6 +40,7 @@ Argument | Expected Value | Required
 --max-updates | Maximum number of updates before exiting. Use 0 to denote all | No
 --report | File to write the markdown report summary to | No
 --report-append | Append to existing report file. Default is to NOT append | No
+--parse-html | Enable parse HTML to look for `<img ...>` tags | No
 
 Sample usage:
 

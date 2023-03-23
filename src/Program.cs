@@ -54,6 +54,9 @@ namespace MarkdownFigma
         [Option("--report-append", "Append to the report file if it exists.", CommandOptionType.NoValue)]
         public bool ReportAppend { get; private set; } = false;
 
+        [Option("--parse-html", "Parse HTML when searching for images.", CommandOptionType.NoValue)]
+        public bool ParseHTML { get; private set; } = false;
+
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
         private int OnExecute()
@@ -152,7 +155,7 @@ namespace MarkdownFigma
             Log.Information("Figma URL is: {URL}", figmaURL);
             string exportPath = Path.Combine(Path.GetDirectoryName(filePath), ExportFolder);
 
-            IEnumerable<string> images = MarkdownUtils.GetImages(filePath, ExportFolder);
+            IEnumerable<string> images = MarkdownUtils.GetImages(filePath, ExportFolder, ParseHTML);
 
             IEnumerable<UpdateReport> updatedAssets = FigmaAPI.ExportNodesTo(FigmaToken, figmaURL, exportPath, IgnoreDuplicates, SVGVisualCheckOnly, images, SimilarityThreshold);
             Log.Information("Downloaded {Count} files, totaling {Size}", FigmaAPI.DOWNLOADS_COUNT, BytesToString(FigmaAPI.DOWNLOADS_SIZE));
