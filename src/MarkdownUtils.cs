@@ -91,7 +91,9 @@ namespace MarkdownFigma
             if (parseHTML)
                 images = images.Concat(ExtractHTMLImages(basePath, pathFilter, document)).ToList();
 
-            return images;
+            IEnumerable<string> withoutQueryString = images.Select(img => IOUtils.RemoveQueryString(img));
+
+            return withoutQueryString;
         }
 
         private static IEnumerable<string> ExtractHTMLImages(string basePath, string pathFilter, MarkdownDocument document)
