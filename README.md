@@ -41,6 +41,7 @@ Argument | Expected Value | Required
 --report | File to write the markdown report summary to | No
 --report-append | Append to existing report file. Default is to NOT append | No
 --parse-html | Enable parse HTML to look for `<img ...>` tags | No
+--no-delete | Do not delete extra files from export folder | No
 
 Sample usage:
 

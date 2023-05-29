@@ -57,6 +57,9 @@ namespace MarkdownFigma
         [Option("--parse-html", "Parse HTML when searching for images.", CommandOptionType.NoValue)]
         public bool ParseHTML { get; private set; } = false;
 
+        [Option("--no-delete", "Do not delete images.", CommandOptionType.NoValue)]
+        public bool NoDelete { get; private set; } = false;
+
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
         private int OnExecute()
@@ -193,13 +196,16 @@ namespace MarkdownFigma
                         else
                         {
                             Log.Debug("Deleting file {File}", f);
-                            File.Delete(f);
-                            deletedAssets.Add(new UpdateReport()
+                            if (NoDelete == false)
                             {
-                                Name = fname,
-                                Similarity = 0,
-                                Action = UpdateAction.DELETE,
-                            });
+                                File.Delete(f);
+                                deletedAssets.Add(new UpdateReport()
+                                {
+                                    Name = fname,
+                                    Similarity = 0,
+                                    Action = UpdateAction.DELETE,
+                                });
+                            }
                         }
                     }
 
