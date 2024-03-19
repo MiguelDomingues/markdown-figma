@@ -163,54 +163,68 @@ namespace MarkdownFigma
             IEnumerable<UpdateReport> updatedAssets = FigmaAPI.ExportNodesTo(FigmaToken, figmaURL, exportPath, IgnoreDuplicates, SVGVisualCheckOnly, images, SimilarityThreshold);
             Log.Information("Downloaded {Count} files, totaling {Size}", FigmaAPI.DOWNLOADS_COUNT, BytesToString(FigmaAPI.DOWNLOADS_SIZE));
 
-            if (EmptyExportFolder && Directory.Exists(exportPath))
+            if (Directory.Exists(exportPath))
             {
-                List<UpdateReport> deletedAssets = new List<UpdateReport>();
-                Log.Information("Deleting files from {Path}", exportPath);
-                string[] fileEntries = Directory.GetFiles(exportPath);
-                foreach (string f in fileEntries)
+                if (EmptyExportFolder)
                 {
-                    string fname = Path.GetFileName(f);
-                    if (!deletedAssets.Any(ua => ua.Name == fname))
+                    List<UpdateReport> deletedAssets = new List<UpdateReport>();
+                    Log.Information("Deleting files from {Path}", exportPath);
+                    string[] fileEntries = Directory.GetFiles(exportPath);
+                    foreach (string f in fileEntries)
                     {
-                        if (updatedAssets.Any(ua => ua.Name == fname))
+                        string fname = Path.GetFileName(f);
+                        if (!deletedAssets.Any(ua => ua.Name == fname))
                         {
-                            continue;
-                        }
-                        else if (images.Any(i => i == fname))
-                        {
-                            if (!Enum.GetValues(typeof(FigmaFormat)).Cast<FigmaFormat>().Any(ff => Enum.GetName(typeof(FigmaFormat), ff).ToLower() == Path.GetExtension(fname).Substring(1)))
+                            if (updatedAssets.Any(ua => ua.Name == fname))
                             {
-                                Log.Information("Ignoring {File} due to its extension.", fname);
+                                continue;
+                            }
+                            else if (images.Any(i => i == fname))
+                            {
+                                if (!Enum.GetValues(typeof(FigmaFormat)).Cast<FigmaFormat>().Any(ff => Enum.GetName(typeof(FigmaFormat), ff).ToLower() == Path.GetExtension(fname).Substring(1)))
+                                {
+                                    Log.Information("Ignoring {File} due to its extension.", fname);
+                                }
+                                else
+                                {
+                                    deletedAssets.Add(new UpdateReport()
+                                    {
+                                        Name = fname,
+                                        Similarity = 0,
+                                        Action = UpdateAction.FIGMA_MISSING,
+                                    });
+                                }
                             }
                             else
                             {
-                                deletedAssets.Add(new UpdateReport()
+                                Log.Debug("Deleting file {File}", f);
+                                if (NoDelete == false)
                                 {
-                                    Name = fname,
-                                    Similarity = 0,
-                                    Action = UpdateAction.FIGMA_MISSING,
-                                });
+                                    File.Delete(f);
+                                    deletedAssets.Add(new UpdateReport()
+                                    {
+                                        Name = fname,
+                                        Similarity = 0,
+                                        Action = UpdateAction.DELETE,
+                                    });
+                                }
                             }
                         }
-                        else
-                        {
-                            Log.Debug("Deleting file {File}", f);
-                            if (NoDelete == false)
-                            {
-                                File.Delete(f);
-                                deletedAssets.Add(new UpdateReport()
-                                {
-                                    Name = fname,
-                                    Similarity = 0,
-                                    Action = UpdateAction.DELETE,
-                                });
-                            }
-                        }
-                    }
 
+                    }
+                    updatedAssets = updatedAssets.Concat(deletedAssets).ToList();
                 }
-                updatedAssets = updatedAssets.Concat(deletedAssets).ToList();
+                else
+                {
+                    IEnumerable<UpdateReport> missingInFigma = images.Where(s => !updatedAssets.Any(ua => ua.Name == s)).Select(s =>
+                        new UpdateReport()
+                        {
+                            Name = s,
+                            Similarity = 0,
+                            Action = UpdateAction.FIGMA_MISSING,
+                        });
+                    updatedAssets = updatedAssets.Concat(missingInFigma.ToList());
+                }
             }
 
             Updates.Add(filePath, updatedAssets);
