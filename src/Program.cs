@@ -216,13 +216,15 @@ namespace MarkdownFigma
                 }
                 else
                 {
-                    IEnumerable<UpdateReport> missingInFigma = images.Where(s => !updatedAssets.Any(ua => ua.Name == s)).Select(s =>
-                        new UpdateReport()
-                        {
-                            Name = s,
-                            Similarity = 0,
-                            Action = UpdateAction.FIGMA_MISSING,
-                        });
+                    IEnumerable<UpdateReport> missingInFigma = images.Where(s => !updatedAssets.Any(ua => ua.Name == s))
+                        .Where(s => ImageUtils.IsFigmaExtension(Path.GetExtension(s)))
+                        .Select(s =>
+                            new UpdateReport()
+                            {
+                                Name = s,
+                                Similarity = 0,
+                                Action = UpdateAction.FIGMA_MISSING,
+                            });
                     updatedAssets = updatedAssets.Concat(missingInFigma.ToList());
                 }
             }

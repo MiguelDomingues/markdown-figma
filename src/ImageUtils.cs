@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using CoenM.ImageHash;
 using CoenM.ImageHash.HashAlgorithms;
@@ -55,6 +56,18 @@ namespace MarkdownFigma
                     throw new System.Exception("Failed to convert to png");
                 }
             }
+        }
+
+        internal static bool IsFigmaExtension(string extension)
+        {
+            switch (extension)
+            {
+                case ".png":
+                case ".svg":
+                case ".jpg":
+                    return true;
+            }
+            return false;
         }
     }
 }
