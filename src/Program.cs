@@ -60,7 +60,7 @@ namespace MarkdownFigma
         [Option("--no-delete", "Do not delete images.", CommandOptionType.NoValue)]
         public bool NoDelete { get; private set; } = false;
 
-        [Option("--ignore", "Text file containing a list of paths to be ignored. One path per line", CommandOptionType.SingleOrNoValue)]
+        [Option("--ignore", "Text file containing a list of paths to be ignored. One path per line", CommandOptionType.SingleValue)]
         public string IgnoreList { get; private set; } = null;
         public HashSet<string> IgnorePaths { get; private set; } = new();
 
