@@ -60,6 +60,10 @@ namespace MarkdownFigma
         [Option("--no-delete", "Do not delete images.", CommandOptionType.NoValue)]
         public bool NoDelete { get; private set; } = false;
 
+        [Option("--ignore", "Text file containing a list of paths to be ignored. One path per line", CommandOptionType.SingleValue)]
+        public string IgnoreList { get; private set; } = null;
+        public HashSet<string> IgnorePaths { get; private set; } = new();
+
         private Dictionary<string, IEnumerable<UpdateReport>> Updates = new Dictionary<string, IEnumerable<UpdateReport>>();
 
         private int OnExecute()
@@ -71,6 +75,8 @@ namespace MarkdownFigma
             Log.Information("Export folder name set to: {Folder}", ExportFolder);
             if (ReportFile != null)
                 Report = new StreamWriter(ReportFile, ReportAppend);
+
+            LoadIgnorePaths();
 
             try
             {
@@ -102,6 +108,19 @@ namespace MarkdownFigma
                 Log.Error(e.Message);
                 Log.Debug(e.StackTrace);
                 return -1;
+            }
+        }
+
+        private void LoadIgnorePaths()
+        {
+            if (IgnoreList != null)
+            {
+                Log.Information("Loading ignore paths from {file}", IgnoreList);
+                string list = File.ReadAllText(IgnoreList);
+                List<string> files = list.Split(
+                    new string[] { "\r\n", "\r", "\n" },
+                    StringSplitOptions.None).Where(s => !string.IsNullOrEmpty(s)).ToList();
+                files.ForEach(f => IgnorePaths.Add(IOUtils.UniformPath(f)));
             }
         }
 
@@ -160,7 +179,7 @@ namespace MarkdownFigma
 
             IEnumerable<string> images = MarkdownUtils.GetImages(filePath, ExportFolder, ParseHTML);
 
-            IEnumerable<UpdateReport> updatedAssets = FigmaAPI.ExportNodesTo(FigmaToken, figmaURL, exportPath, IgnoreDuplicates, SVGVisualCheckOnly, images, SimilarityThreshold);
+            IEnumerable<UpdateReport> updatedAssets = FigmaAPI.ExportNodesTo(FigmaToken, figmaURL, exportPath, IgnoreDuplicates, SVGVisualCheckOnly, images, SimilarityThreshold, IgnorePaths);
             Log.Information("Downloaded {Count} files, totaling {Size}", FigmaAPI.DOWNLOADS_COUNT, BytesToString(FigmaAPI.DOWNLOADS_SIZE));
 
             if (Directory.Exists(exportPath))
@@ -224,8 +243,8 @@ namespace MarkdownFigma
                                 Name = s,
                                 Similarity = 0,
                                 Action = UpdateAction.FIGMA_MISSING,
-                            });
-                    updatedAssets = updatedAssets.Concat(missingInFigma.ToList());
+                            }).ToList();
+                    updatedAssets = updatedAssets.Concat(missingInFigma);
                 }
             }
 
@@ -233,7 +252,7 @@ namespace MarkdownFigma
 
             if (updatedAssets.Count() > 0 && Report != null)
             {
-                if (updatedAssets.Any(ua => ua.Action != UpdateAction.NONE))
+                if (updatedAssets.Any(ua => ua.Action != UpdateAction.NONE && ua.Action != UpdateAction.IGNORE))
                 {
                     Report.WriteLine(":memo: " + filePath + " ([Figma](" + figmaURL + "))");
                     Report.WriteLine();
@@ -268,6 +287,7 @@ namespace MarkdownFigma
                             case UpdateAction.UNUSED:
                                 Report.WriteLine("[" + ExportFolder + Path.DirectorySeparatorChar + ur.Name + "](" + ur.URL + ")" + " | Not used");
                                 break;
+                            case UpdateAction.IGNORE:
                             case UpdateAction.NONE:
                                 break;
                         }

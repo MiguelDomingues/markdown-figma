@@ -18,5 +18,9 @@ namespace MarkdownFigma
             return path.Substring(0, index);
         }
 
+        public static string UniformPath(string path)
+        {
+            return Path.GetRelativePath(Directory.GetCurrentDirectory(), path);
+        }
     }
 }

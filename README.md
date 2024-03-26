@@ -42,6 +42,7 @@ Argument | Expected Value | Required
 --report-append | Append to existing report file. Default is to NOT append | No
 --parse-html | Enable parse HTML to look for `<img ...>` tags | No
 --no-delete | Do not delete extra files from export folder | No
+--ignore | Path to a text file containing the images to be ignored (one per line) | No
 
 Sample usage:
 
