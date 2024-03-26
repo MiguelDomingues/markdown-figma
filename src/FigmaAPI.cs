@@ -132,7 +132,7 @@ namespace MarkdownFigma
             Log.Information("Inspecting {Url}", figmaURL);
             string fileKey = figmaURL.Substring(figmaURL.IndexOf("figma.com/file") + 15);
             fileKey = fileKey.Substring(0, fileKey.IndexOf("/"));
-            List<UpdateReport> updatedAssets = new List<UpdateReport>();
+            ConcurrentBag<UpdateReport> updatedAssets = new();
             string nodeId = GetFigmaNodeId(figmaURL);
 
             FigmaNode node = GetFileNode(figmaToken, fileKey, nodeId);
