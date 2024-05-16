@@ -130,8 +130,7 @@ namespace MarkdownFigma
         internal static IEnumerable<UpdateReport> ExportNodesTo(string figmaToken, string figmaURL, string exportPath, bool ignoreDuplicates, bool svgVisualCheckOnly, IEnumerable<string> includeOnly, double threshold, IEnumerable<string> IgnorePaths)
         {
             Log.Information("Inspecting {Url}", figmaURL);
-            string fileKey = figmaURL.Substring(figmaURL.IndexOf("figma.com/file") + 15);
-            fileKey = fileKey.Substring(0, fileKey.IndexOf("/"));
+            string fileKey = GetFileKeyFromURL(figmaURL);
             ConcurrentBag<UpdateReport> updatedAssets = new();
             string nodeId = GetFigmaNodeId(figmaURL);
 
@@ -334,6 +333,16 @@ namespace MarkdownFigma
                 });
             }
             return updatedAssets;
+        }
+
+        private static string GetFileKeyFromURL(string figmaURL)
+        {
+            string pattern = @"figma\.com\/(design|file)\/(.*)\/";
+            Match m = Regex.Match(figmaURL, pattern, RegexOptions.IgnoreCase);
+            if (m.Success)
+                return m.Groups[2].Value;
+
+            throw new Exception("Invalid figma.com URL");
         }
 
         private static string GetFigmaNodeId(string figmaURL)
