@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Markdig;
 using Markdig.Extensions.Yaml;
@@ -102,8 +103,10 @@ namespace MarkdownFigma
             var htmlObjs = document.Descendants().Where(d => d is HtmlBlock).Cast<HtmlBlock>();
             foreach (HtmlBlock obj in htmlObjs)
             {
+                string rawHtml = String.Join("\r\n", obj.Lines);
+
                 HtmlDocument htmlDoc = new HtmlDocument();
-                htmlDoc.LoadHtml(String.Join("\r\n", obj.Lines));
+                htmlDoc.LoadHtml(rawHtml);
 
                 if (htmlDoc == null)
                     continue;
@@ -122,9 +125,30 @@ namespace MarkdownFigma
 
                     }
                 }
+
+                // Markdig treats blocks like <table>...</table> as a single HtmlBlock and
+                // doesn't parse markdown syntax inside them, even when the block opts in
+                // (e.g. <table markdown="1">). Scan the raw HTML for markdown image
+                // syntax so those references aren't missed.
+                foreach (Match m in MarkdownImageRegex.Matches(rawHtml))
+                {
+                    string imgSrc = m.Groups["url"].Value;
+                    if (string.IsNullOrEmpty(imgSrc))
+                        continue;
+
+                    string imagePath = Path.GetDirectoryName(Path.GetFullPath(Path.Combine(basePath, imgSrc)));
+                    if (imagePath.Equals(pathFilter))
+                        images.Add(Path.GetFileName(imgSrc));
+                    else
+                        Log.Debug("Image {Image} will be ignored. Outside of path filter.", imgSrc);
+                }
             }
             return images;
         }
+
+        private static readonly Regex MarkdownImageRegex = new Regex(
+            @"!\[[^\]]*\]\((?<url>[^\s)]+)(?:\s+(?:""[^""]*""|'[^']*'|\([^)]*\)))?\)",
+            RegexOptions.Compiled);
 
     }
 }
